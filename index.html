@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>你现在需要什么</title>
+<style>
+:root{
+  --bg:#FDFAF6;
+  --card:#FFFFFF;
+  --primary:#C4797D;
+  --primary-deep:#9E5A5F;
+  --text:#4A423E;
+  --muted:#8C827C;
+  --line:#EEE6DF;
+  --cloud:#DFD8D0;
+  --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","SimSun",serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  line-height:1.9;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:40px 24px;
+}
+main{width:100%;max-width:420px;text-align:center}
+
+h1{font-family:var(--serif);font-weight:400;font-size:27px;line-height:1.8}
+.sub{margin-top:12px;color:var(--muted);font-size:15px;transition:opacity .5s ease}
+
+/* ---------- 开场：点掉乌云 ---------- */
+.sky-area{position:relative;width:100%;aspect-ratio:1.4;margin-top:26px}
+.cloud{
+  position:absolute;background:none;border:none;padding:0;cursor:pointer;
+  transform-origin:center;
+  transition:transform .34s ease,opacity .34s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.cloud:hover{transform:scale(1.07)}
+.cloud.gone{transform:scale(0);opacity:0;pointer-events:none}
+.cloud svg{display:block;width:100%;height:auto}
+.puff{
+  position:absolute;width:13px;height:13px;border-radius:50%;
+  background:var(--cloud);pointer-events:none;
+  animation:puffOut .62s ease-out forwards;
+}
+@keyframes puffOut{
+  0%{opacity:.85;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.35)}
+}
+.skip{margin-top:16px;background:none;border:none;color:#B6A9A0;font-family:inherit;font-size:13px;cursor:pointer}
+
+/* ---------- 选项 ---------- */
+.opts{margin-top:36px;display:flex;flex-direction:column;gap:13px}
+button.opt{
+  font-family:inherit;font-size:17px;color:var(--text);
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:20px;cursor:pointer;display:flex;align-items:center;gap:14px;
+  transition:transform .28s ease,opacity .28s ease,border-color .2s ease,box-shadow .2s ease;
+  text-align:left;width:100%;
+}
+button.opt:hover{transform:translateY(-2px);border-color:var(--primary);box-shadow:0 8px 22px rgba(196,121,125,.12)}
+button.opt:active{transform:translateY(0)}
+button.opt .ico{font-size:22px;line-height:1}
+button.opt .txt{flex:1}
+button.opt .txt small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+button.opt.dim{opacity:0;transform:scale(.97);pointer-events:none}
+button.opt.picked{opacity:1;transform:scale(1.04);border-color:var(--primary);box-shadow:0 8px 22px rgba(196,121,125,.12)}
+
+button.opt.minor{background:transparent;border-style:dashed;color:var(--muted);font-size:15px;justify-content:center;padding:15px}
+button.opt.minor:hover{border-color:var(--muted);box-shadow:none}
+
+.hide{display:none}
+.fade{animation:fade .5s ease}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---------- 回应 ---------- */
+.big{font-size:56px;line-height:1;margin-bottom:24px}
+.ans p{font-family:var(--serif);font-size:19px;line-height:2.15;margin-top:18px}
+#aDsc,#aTail{opacity:0;transition:opacity .5s ease}
+#aDsc.in,#aTail.in{opacity:1}
+.tail{
+  font-family:inherit;font-size:14px;color:var(--muted);
+  margin-top:28px;padding-top:22px;border-top:1px dashed var(--line);
+}
+
+/* ---------- 长按抱抱 ---------- */
+.hug{position:relative;margin-top:28px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.hug-ring{position:relative;width:140px;height:140px;margin:0 auto;cursor:pointer}
+.hug-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.hug-ring .bg{stroke:#EFE9E3}
+.hug-ring .prog{stroke:#C4797D;stroke-linecap:round;stroke-dasharray:339.3;stroke-dashoffset:339.3}
+.hug-ring.active .prog{animation:ringFill 3s linear forwards}
+@keyframes ringFill{to{stroke-dashoffset:0}}
+.hug-ico{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px}
+.hug-tip{margin-top:14px;font-size:14px;color:var(--muted);font-family:inherit}
+.hug.done .hug-ring{pointer-events:none}
+.hug-heart{
+  position:absolute;left:50%;top:70px;font-size:15px;pointer-events:none;
+  animation:heartOut 1.1s ease-out forwards;
+}
+@keyframes heartOut{
+  0%{opacity:.9;transform:translate(-50%,0) scale(.6)}
+  100%{opacity:0;transform:translate(calc(-50% + var(--dx)),var(--dy)) scale(1.1)}
+}
+
+/* ---------- 收下 / 换一个 ---------- */
+.act{margin-top:34px;position:relative;display:flex;flex-direction:column;align-items:center;gap:16px}
+.accept{
+  background:var(--primary);color:#fff;border:none;
+  padding:14px 42px;border-radius:50px;
+  font-family:inherit;font-size:16px;cursor:pointer;
+  transition:background .3s ease,color .3s ease,transform .2s ease;
+}
+.accept:hover{transform:translateY(-2px)}
+.accept.done{background:transparent;color:var(--muted);border:1px solid var(--line);cursor:default;transform:none}
+.again{margin-top:0;background:none;border:none;color:var(--primary);font-family:inherit;font-size:15px;cursor:pointer;text-decoration:underline;text-underline-offset:5px}
+
+/* ---------- 天晴小太阳 ---------- */
+.sun{position:absolute;left:50%;top:40%;width:120px;pointer-events:none;animation:sunRise .9s ease-out forwards}
+@keyframes sunRise{from{opacity:0;transform:translate(-50%,26px)}to{opacity:1;transform:translate(-50%,0)}}
+.sun svg{width:100%;height:auto;display:block}
+.sun .rays{transform-origin:60px 60px;animation:spinSlow 16s linear infinite}
+@keyframes spinSlow{to{transform:rotate(360deg)}}
+
+/* ---------- 戳气包 ---------- */
+.poke{margin-top:24px;position:relative}
+.poke-ball{
+  width:62px;height:62px;border-radius:50%;border:none;cursor:pointer;
+  background:#EFE9E3;color:#8C827C;font-family:var(--serif);font-size:22px;
+  transform:scale(var(--s,1));transition:transform .18s ease;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+}
+.poke-ball.gone{opacity:0;pointer-events:none;transform:scale(0)}
+@keyframes wob{0%{transform:scale(var(--s,1))}40%{transform:scale(calc(var(--s,1)*.84))}100%{transform:scale(var(--s,1))}}
+.poke.wobbling .poke-ball{animation:wob .32s ease}
+.poke-tip{margin-top:8px;font-size:13px;color:var(--muted)}
+
+/* ---------- 回应里的三个小玩具 ---------- */
+.extra{margin-top:26px;position:relative;opacity:0;transition:opacity .5s ease}
+.extra.show{opacity:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{
+  background:#fff;border:1px solid var(--line);border-radius:50px;
+  padding:7px 16px;font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;
+  transition:background .2s ease,color .2s ease,border-color .2s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.chip-note{margin-top:12px;font-size:14px;color:var(--primary-deep);min-height:22px}
+
+.dial{
+  background:#fff;border:1px solid var(--primary);color:var(--primary);
+  border-radius:50px;padding:12px 34px;font-family:inherit;font-size:16px;cursor:pointer;
+  transition:border-color .3s ease,color .3s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.dial:disabled{border-color:var(--line);color:var(--muted);cursor:default}
+.dial-note{margin-top:12px;font-size:14px;color:var(--muted);min-height:22px}
+
+.scr{width:280px;max-width:100%;height:96px;margin:0 auto;position:relative;border-radius:12px;overflow:hidden}
+.scr-under{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#FBF3EC;
+}
+.scr-under b{font-family:var(--serif);font-size:30px;color:var(--primary-deep);line-height:1.35}
+.scr-under small{font-size:12px;color:var(--muted)}
+.scr canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair;transition:opacity .6s ease}
+.scr.done canvas{opacity:0;pointer-events:none}
+.scr-hint{margin-top:10px;font-size:13px;color:var(--muted)}
+
+/* 通用飘字（收下/戳气包等场合复用） */
+.fly{
+  position:absolute;left:50%;top:40%;font-size:15px;pointer-events:none;
+  animation:heartOut 1.1s ease-out forwards;
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  #aDsc,#aTail{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<main>
+  <!-- 开场：点掉乌云 -->
+  <div id="sky">
+    <h1>先把这堆坏东西消灭掉</h1>
+    <p class="sub" id="skySub">点一下，散一朵</p>
+    <div class="sky-area" id="skyArea"></div>
+    <button class="skip" id="skip">不想玩，直接看 ›</button>
+  </div>
+
+  <!-- 提问 -->
+  <div id="ask" class="hide">
+    <h1>叉宝现在需要什么？</h1>
+    <p class="sub" id="sub">隔着这么远，能做的我马上做</p>
+
+    <div class="opts">
+      <button class="opt" data-k="hug">
+        <span class="ico">🫂</span>
+        <span class="txt">隔着屏幕抱一下<small>欠着的那个，见面补上</small></span>
+      </button>
+      <button class="opt" data-k="food">
+        <span class="ico">🧋</span>
+        <span class="txt">给我点杯奶茶<small>地址我还有，想喝什么你说</small></span>
+      </button>
+      <button class="opt" data-k="call">
+        <span class="ico">📞</span>
+        <span class="txt">今晚打个电话给我<small>文字说不清的，电话里说</small></span>
+      </button>
+      <button class="opt" data-k="gift">
+        <span class="ico">🎁</span>
+        <span class="txt">送我个礼物<small>捏捏，我自己挑</small></span>
+      </button>
+      <button class="opt minor" data-k="dunno">我也不知道我想要什么</button>
+    </div>
+
+    <!-- 戳气包 -->
+    <div class="poke" id="pokeZone">
+      <button class="poke-ball" id="pokeBall" aria-label="戳气包">气</button>
+      <p class="poke-tip" id="pokeTip">还剩点气？戳它两下</p>
+    </div>
+  </div>
+
+  <!-- 回应 -->
+  <div id="ans" class="ans hide">
+    <div class="big" id="aIco"></div>
+    <h1 id="aTtl"></h1>
+    <p id="aDsc"></p>
+
+    <div class="hug hide" id="hugZone">
+      <div class="hug-ring" id="hugRing">
+        <svg viewBox="0 0 120 120">
+          <circle class="bg" cx="60" cy="60" r="54" fill="none" stroke-width="6"/>
+          <circle class="prog" cx="60" cy="60" r="54" fill="none" stroke-width="6"/>
+        </svg>
+        <div class="hug-ico" id="hugIco">🫂</div>
+      </div>
+      <p class="hug-tip" id="hugTip">按住三秒</p>
+    </div>
+
+    <!-- 奶茶：选糖度 -->
+    <div class="extra hide" id="foodExtra">
+      <div class="chips" id="sugarChips">
+        <button class="chip">无糖</button>
+        <button class="chip">三分甜</button>
+        <button class="chip">五分甜</button>
+        <button class="chip">全糖</button>
+        <button class="chip">随便</button>
+      </div>
+      <p class="chip-note" id="sugarNote"></p>
+    </div>
+
+    <!-- 电话：先彩排一遍 -->
+    <div class="extra hide" id="callExtra">
+      <button class="dial" id="dialBtn">先彩排一遍</button>
+      <p class="dial-note" id="dialNote"></p>
+    </div>
+
+    <!-- 捏捏：刮开看预算 -->
+    <div class="extra hide" id="giftExtra">
+      <div class="scr" id="scrBox">
+        <div class="scr-under"><b id="scrAmt">¥88</b><small id="scrSub">挑超了跟我说，我加钱</small></div>
+        <canvas id="scrCv"></canvas>
+      </div>
+      <p class="scr-hint">用手指刮开看看</p>
+    </div>
+
+    <p class="tail" id="aTail"></p>
+
+    <div class="act">
+      <button class="accept" id="accept">我收下了</button>
+      <button class="again" id="again">换一个</button>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ============ 静默上报（飞书机器人） ============
+     她每次选择会发一条消息到您的飞书群。
+     若机器人开了「签名校验」，请把 secret 填到 FEISHU_SECRET，
+     否则留空即可。上报不打断页面、她无感知。 */
+  var FEISHU_HOOK = 'https://open.feishu.cn/open-apis/bot/v2/hook/5a2b35e3-dd07-44b8-a77c-5fac1edbdedc';
+  var FEISHU_SECRET = '';
+
+  function report(choice, detail){
+    if(!FEISHU_HOOK) return;
+    var labels = {hug:'抱抱', food:'奶茶', call:'打电话', gift:'捏捏', dunno:'不知道想要什么'};
+    var text = '叉宝选了：' + (labels[choice] || choice);
+    if(detail) text += '（' + detail + '）';
+    text += '  ' + new Date().toLocaleString('zh-CN');
+    var body = {msg_type:'text', content:{text:text}};
+    try{
+      fetch(FEISHU_HOOK, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(body)
+      });
+    }catch(e){}
+  }
+
+  var R = {
+    hug:{
+      i:'🫂', t:'先欠着',
+      d:'现在抱不到真的，这个我不装。<br>按住下面那个圈三秒，<br>就算我先抱一下。',
+      x:'欠着的那个，见面那天第一个补上。'
+    },
+    food:{
+      i:'🧋', t:'想喝什么？',
+      d:'我给你点。<br>热的凉的都行，加料随便加。<br>备注你想写什么就写什么。',
+      x:'送到了给我拍张照。'
+    },
+    call:{
+      i:'📞', t:'想听听你的声音',
+      d:'就是想听听。<br>不想说话也没关系，把手机放那儿，<br>我听着你那边的动静就行。',
+      x:'几点都行，晚了也没关系。文字容易看错语气，电话不会。'
+    },
+    gift:{
+      i:'🎁', t:'捏捏，懂了',
+      d:'你自己挑，我付钱。<br>看中哪个把链接甩给我，我立刻下单。<br>挑多久都行，慢慢逛。',
+      x:'到了拍给我看，顺便告诉我捏起来什么手感。'
+    },
+    dunno:{
+      i:'🤲', t:'那就先不想',
+      d:'不用勉强自己说清楚。<br>我在这儿，什么时候想好了什么时候说。',
+      x:'上面那几个一直都在，随时可以换。'
+    }
+  };
+
+  /* ============ 开场乌云 ============
+     POS 每项是 [左%, 上%, 宽%]，增删项即增减云的数量 */
+  var POS = [[6,8,24],[54,0,21],[18,40,22],[58,36,25],[30,68,23]];
+  var CLOUD_SVG =
+    '<svg viewBox="0 0 120 76" aria-hidden="true">'+
+      '<g fill="#DFD8D0">'+
+        '<ellipse cx="60" cy="53" rx="49" ry="21"/>'+
+        '<circle cx="39" cy="41" r="20"/>'+
+        '<circle cx="61" cy="33" r="24"/>'+
+        '<circle cx="83" cy="43" r="18"/>'+
+      '</g>'+
+      '<g fill="#8C827C">'+
+        '<circle cx="48" cy="37" r="3.4"/>'+
+        '<circle cx="72" cy="37" r="3.4"/>'+
+      '</g>'+
+      '<path d="M52 51 Q60 44 68 51" stroke="#8C827C" stroke-width="2.8" fill="none" stroke-linecap="round"/>'+
+    '</svg>';
+
+  var SUN_SVG =
+    '<svg viewBox="0 0 120 120" aria-hidden="true">'+
+      '<g class="rays" stroke="#E8B84B" stroke-width="5" stroke-linecap="round">'+
+        '<line x1="60" y1="8" x2="60" y2="24"/>'+
+        '<line x1="60" y1="96" x2="60" y2="112"/>'+
+        '<line x1="8" y1="60" x2="24" y2="60"/>'+
+        '<line x1="96" y1="60" x2="112" y2="60"/>'+
+        '<line x1="23" y1="23" x2="34" y2="34"/>'+
+        '<line x1="86" y1="86" x2="97" y2="97"/>'+
+        '<line x1="23" y1="97" x2="34" y2="86"/>'+
+        '<line x1="86" y1="34" x2="97" y2="23"/>'+
+      '</g>'+
+      '<circle cx="60" cy="60" r="30" fill="#F2C14E"/>'+
+      '<g fill="#9E5A5F">'+
+        '<circle cx="51" cy="56" r="2.6"/>'+
+        '<circle cx="69" cy="56" r="2.6"/>'+
+      '</g>'+
+      '<path d="M52 64 Q60 70 68 64" stroke="#9E5A5F" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
+    '</svg>';
+
+  var sky=document.getElementById('sky');
+  var skyArea=document.getElementById('skyArea');
+  var skySub=document.getElementById('skySub');
+  var ask=document.getElementById('ask');
+  var ans=document.getElementById('ans');
+  var sub=document.getElementById('sub');
+  var aIco=document.getElementById('aIco');
+  var aTtl=document.getElementById('aTtl');
+  var aDsc=document.getElementById('aDsc');
+  var aTail=document.getElementById('aTail');
+  var hugZone=document.getElementById('hugZone');
+  var hugRing=document.getElementById('hugRing');
+  var hugIco=document.getElementById('hugIco');
+  var hugTip=document.getElementById('hugTip');
+  var acceptBtn=document.getElementById('accept');
+  var opts=document.querySelectorAll('.opt');
+  var left=POS.length;
+
+  POS.forEach(function(p){
+    var b=document.createElement('button');
+    b.className='cloud';
+    b.style.left=p[0]+'%';
+    b.style.top=p[1]+'%';
+    b.style.width=p[2]+'%';
+    b.innerHTML=CLOUD_SVG;
+    b.setAttribute('aria-label','点掉一朵乌云');
+    b.addEventListener('click',function(){ pop(b); });
+    skyArea.appendChild(b);
+  });
+
+  function burst(el){
+    var r=el.getBoundingClientRect();
+    var ar=skyArea.getBoundingClientRect();
+    for(var i=0;i<7;i++){
+      var s=document.createElement('span');
+      s.className='puff';
+      s.style.left=(r.left-ar.left+r.width/2)+'px';
+      s.style.top=(r.top-ar.top+r.height/2)+'px';
+      s.style.setProperty('--dx',((Math.random()-.5)*150)+'px');
+      s.style.setProperty('--dy',(-35-Math.random()*95)+'px');
+      skyArea.appendChild(s);
+      s.addEventListener('animationend',function(e){ e.target.remove(); });
+    }
+  }
+
+  function pop(el){
+    if(el.classList.contains('gone')) return;
+    el.classList.add('gone');
+    if(!reduce) burst(el);
+    left--;
+    skySub.textContent = left>0 ? ('还剩 '+left+' 朵') : '好了，天晴了';
+    if(left<=0){
+      if(!reduce){
+        var s=document.createElement('div');
+        s.className='sun';
+        s.innerHTML=SUN_SVG;
+        skyArea.appendChild(s);
+        setTimeout(toAsk,1650);
+      }else{
+        setTimeout(toAsk,520);
+      }
+    }
+  }
+
+  function toAsk(){
+    if(left>0) left=0;
+    sky.classList.add('hide');
+    ask.classList.remove('hide');
+    ask.classList.remove('fade');
+    void ask.offsetWidth;
+    ask.classList.add('fade');
+  }
+  document.getElementById('skip').addEventListener('click',toAsk);
+
+  /* ============ 长按抱抱 ============ */
+  var hugTimer=null;
+  function hugDown(){
+    if(hugZone.classList.contains('done')) return;
+    hugRing.classList.remove('active');
+    void hugRing.offsetWidth;
+    hugRing.classList.add('active');
+    hugTip.textContent='别松手…';
+    clearTimeout(hugTimer);
+    hugTimer=setTimeout(hugDone,3000);
+  }
+  function hugUp(){
+    if(hugZone.classList.contains('done')) return;
+    clearTimeout(hugTimer);
+    hugRing.classList.remove('active');
+    void hugRing.offsetWidth;
+    hugTip.textContent='按住三秒';
+  }
+  function hugDone(){
+    hugZone.classList.add('done');
+    hugTip.textContent='抱了 3 秒';
+    hugIco.textContent='🫂';
+    if(!reduce) hugBurst();
+    report('hug');
+  }
+  function hugBurst(){
+    for(var i=0;i<10;i++){
+      var s=document.createElement('span');
+      s.className='hug-heart';
+      s.textContent='🤍';
+      s.style.setProperty('--dx',((Math.random()-.5)*170)+'px');
+      s.style.setProperty('--dy',(-60-Math.random()*80)+'px');
+      hugZone.appendChild(s);
+      s.addEventListener('animationend',function(e){ e.target.remove(); });
+    }
+  }
+  function resetHug(){
+    clearTimeout(hugTimer);
+    hugZone.classList.remove('done');
+    hugRing.classList.remove('active');
+    void hugRing.offsetWidth;
+    hugTip.textContent='按住三秒';
+    hugIco.textContent='🫂';
+  }
+  hugRing.addEventListener('pointerdown',hugDown);
+  hugRing.addEventListener('pointerup',hugUp);
+  hugRing.addEventListener('pointerleave',hugUp);
+  hugRing.addEventListener('pointercancel',hugUp);
+
+  /* ============ 通用飘字 ============ */
+  function flyOut(el,arr,n){
+    if(reduce) return;
+    for(var i=0;i<n;i++){
+      var s=document.createElement('span');
+      s.className='fly';
+      s.textContent=arr[i%arr.length];
+      s.style.left=(32+Math.random()*36)+'%';
+      s.style.setProperty('--dx',((Math.random()-.5)*180)+'px');
+      s.style.setProperty('--dy',(-50-Math.random()*90)+'px');
+      el.appendChild(s);
+      s.addEventListener('animationend',function(e){ e.target.remove(); });
+    }
+  }
+
+  /* ============ 戳气包（选项页） ============ */
+  var pokeZone=document.getElementById('pokeZone');
+  var pokeBall=document.getElementById('pokeBall');
+  var pokeTip=document.getElementById('pokeTip');
+  var pokeN=0, POKE_MAX=12;
+  function resetPoke(){
+    pokeN=0;
+    pokeBall.classList.remove('gone');
+    pokeBall.style.setProperty('--s',1);
+    pokeTip.textContent='还剩点气？戳它两下';
+  }
+  pokeBall.addEventListener('click',function(){
+    pokeN++;
+    if(pokeN>=POKE_MAX){
+      pokeBall.classList.add('gone');
+      pokeTip.textContent='气被你戳光了 ☀️ 顺手点上面那个吧';
+      flyOut(pokeZone,['💨','☀️','🤍'],9);
+      return;
+    }
+    pokeBall.style.setProperty('--s',(1-pokeN*0.045).toFixed(3));
+    if(!reduce){
+      pokeZone.classList.remove('wobbling');
+      void pokeZone.offsetWidth;
+      pokeZone.classList.add('wobbling');
+    }
+    var msgs={1:'噗',3:'瘪了点',6:'气在往外冒',9:'快漏完了'};
+    if(msgs[pokeN]) pokeTip.textContent=msgs[pokeN];
+    if(pokeN===POKE_MAX-1) pokeTip.textContent='再戳一下就漏了';
+  });
+
+  /* ============ 奶茶 · 糖度 ============ */
+  var foodExtra=document.getElementById('foodExtra');
+  var sugarChips=document.getElementById('sugarChips');
+  var sugarNote=document.getElementById('sugarNote');
+  var SUGAR_NOTES={
+    '无糖':'无糖是吧，行，记下了。甜的部分我自己补。',
+    '三分甜':'三分甜，剩下七分留着见面补。',
+    '五分甜':'五分甜，稳妥。',
+    '全糖':'全糖？有你的，今天的甜度直接拉满。',
+    '随便':'那我帮你拿主意：五分甜，少冰。'
+  };
+  function sugarReset(){
+    sugarChips.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+    sugarNote.textContent='';
+  }
+  sugarChips.addEventListener('click',function(e){
+    var c=e.target.closest('.chip');
+    if(!c) return;
+    sugarChips.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('on'); });
+    c.classList.add('on');
+    var v=c.textContent;
+    sugarNote.textContent = SUGAR_NOTES[v] || ('记下了，'+v+'。冰的热的，到时你说了算。');
+    report('food', v);
+    flyOut(foodExtra,['🧋'],4);
+  });
+
+  /* ============ 电话 · 先彩排一遍 ============ */
+  var callExtra=document.getElementById('callExtra');
+  var dialBtn=document.getElementById('dialBtn');
+  var dialNote=document.getElementById('dialNote');
+  var dialTimers=[];
+  function dialReset(){
+    dialTimers.forEach(clearTimeout);
+    dialTimers=[];
+    dialBtn.disabled=false;
+    dialBtn.textContent='先彩排一遍';
+    dialNote.textContent='';
+  }
+  dialBtn.addEventListener('click',function(){
+    if(dialBtn.disabled) return;
+    dialBtn.disabled=true;
+    report('call','按了彩排');
+    var seq=['正在拨…','嘟——','嘟——嘟——','嘟——嘟——嘟——'];
+    seq.forEach(function(t,i){
+      dialTimers.push(setTimeout(function(){
+        dialBtn.textContent=t;
+        if(navigator.vibrate){ try{ navigator.vibrate(50); }catch(err){} }
+      }, i*850));
+    });
+    dialTimers.push(setTimeout(function(){
+      dialBtn.textContent='彩排结束 ✔';
+      dialNote.textContent='本人已就位。今晚来电为本人来电，非诈骗，请放心接听。';
+    }, seq.length*850+400));
+  });
+
+  /* ============ 捏捏 · 刮开看预算 ============ */
+  var giftExtra=document.getElementById('giftExtra');
+  var scrBox=document.getElementById('scrBox');
+  var scrCv=document.getElementById('scrCv');
+  var scrAmt=document.getElementById('scrAmt');
+  var scrSub=document.getElementById('scrSub');
+  var AMTS=['¥28','¥58','¥88','¥128','¥168','¥188'];
+  var SUBS=['挑超了跟我说，我加钱','这单不用想，闭眼挑','手气不错，加大力度'];
+  var scratching=false;
+  var giftReported=false;
+  function scrInit(){
+    var w=280,h=96;
+    scrCv.width=w; scrCv.height=h;
+    var ctx=scrCv.getContext('2d');
+    ctx.globalCompositeOperation='source-over';
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#EFE9E3';
+    ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='#B6A9A0';
+    ctx.font='15px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('刮开看这次的预算',w/2,h/2);
+    scrBox.classList.remove('done');
+    scratching=false;
+    giftReported=false;
+    scrAmt.textContent=AMTS[Math.floor(Math.random()*AMTS.length)];
+    scrSub.textContent=SUBS[Math.floor(Math.random()*SUBS.length)];
+  }
+  function scrXY(e){
+    var r=scrCv.getBoundingClientRect();
+    return {
+      x:(e.clientX-r.left)*(scrCv.width/r.width),
+      y:(e.clientY-r.top)*(scrCv.height/r.height)
+    };
+  }
+  function scratchAt(p){
+    var ctx=scrCv.getContext('2d');
+    ctx.globalCompositeOperation='destination-out';
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,17,0,7);
+    ctx.fill();
+  }
+  function scrCheck(){
+    var d=scrCv.getContext('2d').getImageData(0,0,scrCv.width,scrCv.height).data;
+    var clear=0,total=0;
+    for(var i=3;i<d.length;i+=32){ total++; if(d[i]<64) clear++; }
+    if(clear/total>0.5){
+      scrBox.classList.add('done');
+      flyOut(giftExtra,['✨','🤍'],6);
+      if(!giftReported){ giftReported=true; report('gift', scrAmt.textContent); }
+    }
+  }
+  scrCv.addEventListener('pointerdown',function(e){
+    scratching=true;
+    scratchAt(scrXY(e));
+    if(scrCv.setPointerCapture){ try{ scrCv.setPointerCapture(e.pointerId); }catch(err){} }
+  });
+  scrCv.addEventListener('pointermove',function(e){
+    if(!scratching) return;
+    scratchAt(scrXY(e));
+    if(Math.random()<0.15) scrCheck();
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+    scrCv.addEventListener(ev,function(){ if(scratching){ scratching=false; scrCheck(); } });
+  });
+
+  /* 回应卡里的三个小玩具，按选项挂载 */
+  var EXTRA_MAP={
+    food:{el:foodExtra,reset:sugarReset},
+    call:{el:callExtra,reset:dialReset},
+    gift:{el:giftExtra,reset:scrInit}
+  };
+
+  /* ============ 标题打字机（只打标题，正文直接出） ============ */
+  var typeTimer=null;
+  function typeTitle(text,cb){
+    clearInterval(typeTimer);
+    aTtl.textContent='';
+    var i=0;
+    typeTimer=setInterval(function(){
+      aTtl.textContent=text.slice(0,++i);
+      if(i>=text.length){ clearInterval(typeTimer); cb(); }
+    },70);
+  }
+
+  /* ============ 选项 → 回应 ============ */
+  function showAnswer(b){
+    var r=R[b.dataset.k];
+    aIco.textContent=r.i;
+    aDsc.innerHTML=r.d;
+    aTail.textContent=r.x;
+    aDsc.classList.remove('in');
+    aTail.classList.remove('in');
+    hugZone.classList.toggle('hide', b.dataset.k!=='hug');
+    resetHug();
+    Object.keys(EXTRA_MAP).forEach(function(k){
+      EXTRA_MAP[k].el.classList.add('hide');
+      EXTRA_MAP[k].el.classList.remove('show');
+    });
+    var ex=EXTRA_MAP[b.dataset.k];
+    if(ex){
+      ex.reset();
+      setTimeout(function(){
+        ex.el.classList.remove('hide');
+        void ex.el.offsetWidth;
+        ex.el.classList.add('show');
+      }, reduce?0:650);
+    }
+    acceptBtn.classList.remove('done');
+    acceptBtn.disabled=false;
+    acceptBtn.textContent='我收下了';
+
+    ask.classList.add('hide');
+    ans.classList.remove('hide');
+    void ans.offsetWidth;
+
+    if(reduce){
+      aTtl.textContent=r.t;
+      aDsc.classList.add('in');
+      aTail.classList.add('in');
+    }else{
+      typeTitle(r.t,function(){
+        aDsc.classList.add('in');
+        setTimeout(function(){ aTail.classList.add('in'); },220);
+      });
+    }
+    window.scrollTo(0,0);
+  }
+
+  opts.forEach(function(b){
+    b.addEventListener('click',function(){
+      opts.forEach(function(o){ o.classList.add('dim'); });
+      b.classList.remove('dim');
+      b.classList.add('picked');
+      var k=b.dataset.k;
+      if(k==='food') report('food','待选糖度');
+      else if(k==='gift') report('gift','待刮预算');
+      else report(k);
+      setTimeout(function(){ showAnswer(b); }, reduce?0:360);
+    });
+  });
+
+  acceptBtn.addEventListener('click',function(){
+    this.classList.add('done');
+    this.disabled=true;
+    this.textContent='已收下';
+    flyOut(this.parentElement,['🤍','✨'],7);
+  });
+
+  document.getElementById('again').addEventListener('click',function(){
+    opts.forEach(function(o){ o.classList.remove('dim','picked'); });
+    resetPoke();
+    ans.classList.add('hide');
+    ask.classList.remove('hide');
+    ask.classList.remove('fade');
+    void ask.offsetWidth;
+    ask.classList.add('fade');
+  });
+
+  /* ============ 她切走的时候，标题挽留一下 ============ */
+  var TITLE=document.title;
+  document.addEventListener('visibilitychange',function(){
+    document.title = document.hidden ? '别走好不好' : TITLE;
+  });
+
+  /* 迟迟不选的时候，换一句更软的话 */
+  setTimeout(function(){
+    if(!ask.classList.contains('hide')){
+      sub.style.opacity=0;
+      setTimeout(function(){
+        sub.textContent='不想选也没关系，我在这儿';
+        sub.style.opacity=1;
+      },600);
+    }
+  },16000);
+})();
+</script>
+
+<!--
+  ============================================================
+  异地版 · 哄人页
+
+  流程：点掉 5 朵乌云（点完小太阳升起）→ 五个选项
+        → 回应卡（标题逐字出现 + 各自的小玩具）→ 我收下了
+
+  藏着的交互：
+   · 开场    点完乌云，太阳带笑脸升起，光芒慢转
+   · 选项页  底部「戳气包」：越戳越瘪，12 下戳漏，撒 💨☀️
+   · 抱抱    长按 3 秒环形进度，走满撒 🤍
+   · 奶茶    回应里可选糖度，「随便」有彩蛋文案
+   · 电话    「先彩排一遍」拨号音 + 震动，提示真的在今晚
+   · 捏捏    刮刮乐 canvas，随机预算（¥28~¥188）
+   · 收下    撒 🤍✨；切走标签页时标题变「别走好不好」
+
+  要改的地方：
+
+   1. 「你现在需要什么？」→ 改成"XXX，你现在需要什么？"
+      （<title> 也一起改，切标签时显示的"别走好不好"在 JS 末尾）
+
+   2. 五个选项的文字在 <script> 的 R 对象里，按 hug / food / call / gift / dunno 分类
+
+   3. 乌云位置在 POS 数组，每项是 [左%, 上%, 宽%]
+
+   4. 长按时长想改的话：JS 里的 3000（毫秒）和 CSS 里的 3s（ringFill 动画）要一起改
+
+   5. food 那条的「地址我还有」——不确定她的地址就换成"地址发我一下"
+
+   6. 刮刮乐预算金额在 JS 的 AMTS 数组里，随手改
+
+   7. 戳气包的耐戳次数是 POKE_MAX（现在 12）
+
+  设计说明：
+   异地时「我抱抱你」「我出去买」都是兑现不了的承诺，
+   说出来只会提醒她你们隔着多远。
+   能远程做到的（点奶茶、寄东西、打电话）才是真的。
+   所有交互都为情绪服务：把气变成可以戳漏的东西，
+   把等待变成可以刮开的惊喜，不炫技。
+  ============================================================
+-->
+</body>
+</html>
