@@ -291,7 +291,7 @@ button.opt.minor:hover{border-color:var(--muted);box-shadow:none}
      她每次选择会发一条消息到您的飞书群。
      若机器人开了「签名校验」，请把 secret 填到 FEISHU_SECRET，
      否则留空即可。上报不打断页面、她无感知。 */
-  var FEISHU_HOOK = 'https://open.feishu.cn/open-apis/bot/v2/hook/5a2b35e3-dd07-44b8-a77c-5fac1edbdedc';
+  var FEISHU_HOOK = ''; // 留空时不发送通知；生产凭据应由服务端保管。
   var FEISHU_SECRET = '';
 
   function report(choice, detail){
